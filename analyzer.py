@@ -75,7 +75,13 @@ class RepositoryAnalyzer:
             if e.response.status_code == 404:
                 raise AnalyzerError("Repository not found. Check URL and access permissions.")
             elif e.response.status_code == 403:
-                raise AnalyzerError("This repository is private. Please provide a Personal Access Token.")
+                # Check if it's rate limiting
+                if 'rate limit' in e.response.text.lower() or 'x-ratelimit-remaining' in e.response.headers:
+                    remaining = e.response.headers.get('x-ratelimit-remaining', '0')
+                    reset_time = e.response.headers.get('x-ratelimit-reset', 'unknown')
+                    raise AnalyzerError(f"GitHub API rate limit exceeded. Remaining: {remaining}. Please try again later or provide a GitHub Personal Access Token for higher limits.")
+                else:
+                    raise AnalyzerError("Access forbidden. This repository may be private or require authentication. Please provide a Personal Access Token.")
             elif e.response.status_code == 401:
                 raise AnalyzerError("Invalid or expired Personal Access Token.")
             else:
