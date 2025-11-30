@@ -52,7 +52,8 @@ def analyze_repository():
             }), 400
         
         repo_url = data['repo_url']
-        token = data.get('token')
+        # Use token from request, or fall back to environment variable
+        token = data.get('token') or os.getenv('GITHUB_TOKEN')
         
         # Validate URL
         try:
@@ -70,7 +71,7 @@ def analyze_repository():
         if cached_result:
             return jsonify(cached_result.to_dict()), 200
         
-        # Analyze repository
+        # Analyze repository with token
         analyzer = RepositoryAnalyzer(token=token)
         
         try:
